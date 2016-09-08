@@ -11,10 +11,6 @@
     tools:context="jp.techacademy.takumi.fukushima.autoslideshowapp.MainActivity"
     android:background="#222222">
 
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="435dp"
-        android:id="@+id/imageView"/>
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -36,5 +32,12 @@
         android:layout_alignParentBottom="true"
         android:id="@+id/nextButton"
         android:text="＞"/>
+
+    <ImageSwitcher
+        android:layout_width="match_parent"
+        android:layout_height="443dp"
+        android:id="@+id/imageSwitcher"
+        android:layout_above="@+id/playStopButton"
+        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>

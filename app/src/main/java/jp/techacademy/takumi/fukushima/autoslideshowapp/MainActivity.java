@@ -12,8 +12,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageSwitcher;
 import android.widget.ImageView;
+import android.widget.ViewSwitcher;
 
 import java.util.ArrayList;
 import java.util.Timer;
@@ -28,6 +31,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ArrayList<Uri> uris = new ArrayList<Uri>();
     int nowIndex = 0;
     boolean slideshow = false;
+    ImageSwitcher imageSwitcher;
+
+    ArrayList<Integer> imageID = new ArrayList<Integer>();
 
 
     public  class MainTimerTask extends TimerTask{
@@ -53,8 +59,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        imageView = (ImageView) findViewById(R.id.imageView);
-
         Button playStopButton = (Button) findViewById(R.id.playStopButton);
         playStopButton.setOnClickListener(this);
 
@@ -63,6 +67,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Button nextButton = (Button) findViewById(R.id.nextButton);
         nextButton.setOnClickListener(this);
+
+        imageSwitcher = (ImageSwitcher) findViewById(R.id.imageSwitcher);
+        imageSwitcher.setFactory(new ViewSwitcher.ViewFactory(){
+            @Override
+            public View makeView(){
+                imageView = new ImageView(getApplicationContext());
+                imageView.setLayoutParams(new ImageSwitcher.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                return imageView;
+            }
+        });
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
             //パーミッションの確認
@@ -82,6 +96,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v){
+        imageSwitcher.setInAnimation(this, android.R.anim.fade_in);
+        imageSwitcher.setOutAnimation(this, android.R.anim.fade_out);
         if(v.getId() == R.id.prevButton){
             if(!slideshow) {
                 movePosition(-1);
@@ -103,7 +119,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }else if(nowIndex >= uris.size()){
             nowIndex = 0;
         }
-        imageView.setImageURI(uris.get(nowIndex));
+        //imageView.setImageURI(uris.get(nowIndex));
+        imageSwitcher.setImageURI(uris.get(nowIndex));
     }
 
     @Override
@@ -135,11 +152,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             do {
                 int fieldIndex = cursor.getColumnIndex(MediaStore.Images.Media._ID);
+                imageID.add(fieldIndex);
                 Long id = cursor.getLong(fieldIndex);
                 uris.add(ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id));
             }while (cursor.moveToNext());
 
-            imageView.setImageURI(uris.get(0));
+            //imageView.setImageURI(uris.get(0));
+            imageSwitcher.setImageURI(uris.get(0));
         }
         cursor.close();
     }
