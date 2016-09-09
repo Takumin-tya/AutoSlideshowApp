@@ -14,6 +14,8 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageSwitcher;
 import android.widget.ImageView;
@@ -33,6 +35,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     int nowIndex = 0;                          //現在開いている画像の番号格納用
     boolean slideshow = false;               //スライドショー開始/停止判定
     ImageSwitcher imageSwitcher;
+    View mainView;                             //メインVIew
+    View containerView;                        //ボタン用View
+    Animation inAnimation;                    //ボタン表示用アニメーション
+    Animation outAnimation;                   //ボタン非表示用アニメーション
+
+    int timerCounter = 0;
 
     float touchX;     //タッチイベント時の座標(X)
     float touchY;     //タッチイベント時の座標(Y)
@@ -51,6 +59,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
             }
+            if(2 < timerCounter){
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        hideButton();
+                    }
+                });
+            }
+            if(timerCounter <= 3) {
+                timerCounter++;
+            }
         }
     }
 
@@ -62,6 +81,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //アニメーションの設定
+        inAnimation = (Animation) AnimationUtils.loadAnimation(this, R.anim.in_animation);
+        outAnimation = (Animation) AnimationUtils.loadAnimation(this, R.anim.out_animation);
+
+        containerView = (View) findViewById(R.id.contenerView);
+
+        mainView = (View) findViewById(R.id.mainView);
 
         Button playStopButton = (Button) findViewById(R.id.playStopButton);
         playStopButton.setOnClickListener(this);
@@ -100,6 +127,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v){
+
+        timerCounter = 0;
 
         if(v.getId() == R.id.prevButton){
             if(!slideshow) {
@@ -176,6 +205,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case MotionEvent.ACTION_DOWN:
                 touchX = event.getX();
                 //touchY = event.getY();
+                if (containerView.getVisibility() == View.GONE){
+                    containerView.startAnimation(inAnimation);
+                    containerView.setVisibility(View.VISIBLE);
+                    timerCounter = 0;
+                }
                 break;
             case MotionEvent.ACTION_UP:
                 if(!slideshow) {
@@ -191,5 +225,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         return true;
+    }
+
+    public void hideButton(){
+        if(containerView.getVisibility() != View.GONE) {
+            containerView.startAnimation(outAnimation);
+            containerView.setVisibility(View.GONE);
+        }
     }
 }
