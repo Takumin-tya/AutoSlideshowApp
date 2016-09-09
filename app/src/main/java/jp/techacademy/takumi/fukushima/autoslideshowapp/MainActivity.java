@@ -11,6 +11,7 @@ import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -28,10 +29,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final int PERMISSION_REQUEST_CODE = 100;
     ImageView imageView;
-    ArrayList<Uri> uris = new ArrayList<Uri>();
-    int nowIndex = 0;
-    boolean slideshow = false;
+    ArrayList<Uri> uris = new ArrayList<Uri>(); //取得したURI格納用
+    int nowIndex = 0;                          //現在開いている画像の番号格納用
+    boolean slideshow = false;               //スライドショー開始/停止判定
     ImageSwitcher imageSwitcher;
+
+    float touchX;     //タッチイベント時の座標(X)
+    float touchY;     //タッチイベント時の座標(Y)
 
     ArrayList<Integer> imageID = new ArrayList<Integer>();
 
@@ -96,8 +100,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v){
-        imageSwitcher.setInAnimation(this, android.R.anim.fade_in);
-        imageSwitcher.setOutAnimation(this, android.R.anim.fade_out);
+
         if(v.getId() == R.id.prevButton){
             if(!slideshow) {
                 movePosition(-1);
@@ -113,6 +116,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void movePosition(int move){
         nowIndex = nowIndex + move;
+
+        imageSwitcher.setInAnimation(this, android.R.anim.fade_in);
+        imageSwitcher.setOutAnimation(this, android.R.anim.fade_out);
 
         if(nowIndex < 0){
             nowIndex = uris.size() - 1;
@@ -161,5 +167,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             imageSwitcher.setImageURI(uris.get(0));
         }
         cursor.close();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event){
+
+        switch (event.getAction()){
+            case MotionEvent.ACTION_DOWN:
+                touchX = event.getX();
+                //touchY = event.getY();
+                break;
+            case MotionEvent.ACTION_UP:
+                if(!slideshow) {
+                    if (100 < touchX - event.getX()) {
+                        //次へ
+                        movePosition(1);
+                    } else if (100 < event.getX() - touchX) {
+                        //前へ
+                        movePosition(-1);
+                    }
+                }
+                break;
+        }
+
+        return true;
     }
 }
