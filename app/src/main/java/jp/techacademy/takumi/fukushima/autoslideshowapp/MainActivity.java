@@ -3,11 +3,13 @@ package jp.techacademy.takumi.fukushima.autoslideshowapp;
 import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -47,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     ArrayList<Integer> imageID = new ArrayList<Integer>();
 
-
+    //タイマークラスで２秒毎に更新
     public  class MainTimerTask extends TimerTask{
         @Override
         public void run(){
@@ -73,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    //タイマーのインスタンス化
     Timer timer = new Timer();
     TimerTask timerTask = new MainTimerTask();
     android.os.Handler handler = new android.os.Handler();
@@ -90,6 +93,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         mainView = (View) findViewById(R.id.mainView);
 
+        //ボタンの定義
         Button playStopButton = (Button) findViewById(R.id.playStopButton);
         playStopButton.setOnClickListener(this);
 
@@ -154,8 +158,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }else if(nowIndex >= uris.size()){
             nowIndex = 0;
         }
-        //imageView.setImageURI(uris.get(nowIndex));
-        imageSwitcher.setImageURI(uris.get(nowIndex));
+        if(0 < uris.size()) {
+            //imageView.setImageURI(uris.get(nowIndex));
+            imageSwitcher.setImageURI(uris.get(nowIndex));
+        }else{
+            showAlertDialog(2);
+        }
     }
 
     @Override
@@ -165,6 +173,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if(grantResult[0] == PackageManager.PERMISSION_GRANTED){
                     //許可された
                     getContentInfo();
+                }else{
+                    //許可されなかった
+                    showAlertDialog(1);
                 }
                 break;
             default:
@@ -191,6 +202,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Long id = cursor.getLong(fieldIndex);
                 uris.add(ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id));
             }while (cursor.moveToNext());
+
 
             //imageView.setImageURI(uris.get(0));
             imageSwitcher.setImageURI(uris.get(0));
@@ -232,5 +244,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             containerView.startAnimation(outAnimation);
             containerView.setVisibility(View.GONE);
         }
+    }
+
+    private void showAlertDialog(int error){
+
+        //エラーコード1:パーミッションが許可されませんでした。
+        //エラーコード2:画像がありません。
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setTitle("エラーメッセージ");
+        if(error == 1) {
+            Log.d("Android", "アクセス権なし");
+            alertDialogBuilder.setMessage("ストレージのアクセス権限がありません。\nアプリを終了します。");
+        }else if(error == 2){
+            alertDialogBuilder.setMessage("ストレージに画像が存在しません。\nアプリを終了します。");
+        }
+        alertDialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                finish();
+            }
+        });
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
     }
 }
