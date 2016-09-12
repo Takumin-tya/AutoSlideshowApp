@@ -145,6 +145,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }else if(v.getId() == R.id.playStopButton){
             slideshow = !slideshow;
         }
+        //imageView.setImageURI(uris.get(nowIndex));
+        imageSwitcher.setImageURI(uris.get(nowIndex));
     }
 
     private void movePosition(int move){
@@ -158,12 +160,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }else if(nowIndex >= uris.size()){
             nowIndex = 0;
         }
-        if(0 < uris.size()) {
-            //imageView.setImageURI(uris.get(nowIndex));
-            imageSwitcher.setImageURI(uris.get(nowIndex));
-        }else{
-            showAlertDialog(2);
-        }
+
     }
 
     @Override
@@ -203,9 +200,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 uris.add(ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id));
             }while (cursor.moveToNext());
 
-
+        }
+        if(0 < uris.size()) {
             //imageView.setImageURI(uris.get(0));
             imageSwitcher.setImageURI(uris.get(0));
+
+        }else{
+            showAlertDialog(2);
         }
         cursor.close();
     }
