@@ -16,6 +16,8 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -36,11 +38,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ArrayList<Uri> uris = new ArrayList<Uri>(); //取得したURI格納用
     int nowIndex = 0;                          //現在開いている画像の番号格納用
     boolean slideshow = false;               //スライドショー開始/停止判定
+
     ImageSwitcher imageSwitcher;
     View mainView;                             //メインVIew
     View containerView;                        //ボタン用View
     Animation inAnimation;                    //ボタン表示用アニメーション
     Animation outAnimation;                   //ボタン非表示用アニメーション
+
+    Button playStopButton;  //スライドショーの開始/停止ボタン
+    Button prevButton;      //前の画像へ
+    Button nextButton;      //次の画像へ
 
     int timerCounter = 0;
 
@@ -61,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
             }
-            if(2 < timerCounter){
+            if(1 < timerCounter){
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -69,16 +76,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
             }
-            if(timerCounter <= 3) {
+            if(timerCounter <= 2) {
                 timerCounter++;
             }
         }
     }
 
     //タイマーのインスタンス化
-    Timer timer = new Timer();
-    TimerTask timerTask = new MainTimerTask();
-    android.os.Handler handler = new android.os.Handler();
+    Timer timer = null;
+    TimerTask timerTask;
+    android.os.Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,16 +98,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         containerView = (View) findViewById(R.id.contenerView);
 
+
         mainView = (View) findViewById(R.id.mainView);
 
         //ボタンの定義
-        Button playStopButton = (Button) findViewById(R.id.playStopButton);
+        playStopButton = (Button) findViewById(R.id.playStopButton);
         playStopButton.setOnClickListener(this);
 
-        Button prevButton = (Button) findViewById(R.id.prevButton);
+        prevButton = (Button) findViewById(R.id.prevButton);
         prevButton.setOnClickListener(this);
 
-        Button nextButton = (Button) findViewById(R.id.nextButton);
+        nextButton = (Button) findViewById(R.id.nextButton);
         nextButton.setOnClickListener(this);
 
         imageSwitcher = (ImageSwitcher) findViewById(R.id.imageSwitcher);
@@ -125,10 +133,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }else{
             getContentInfo();
         }
-
-        timer.schedule(timerTask, 0, 2000);
     }
 
+    //ボタンクリック
     @Override
     public void onClick(View v){
 
@@ -144,11 +151,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }else if(v.getId() == R.id.playStopButton){
             slideshow = !slideshow;
+            if(slideshow){
+                playStopButton.setText("||");
+                timer = new Timer();
+                timerTask = new MainTimerTask();
+                handler = new android.os.Handler();
+                timer.schedule(timerTask, 0, 2000);
+                prevButton.setVisibility(View.GONE);
+                nextButton.setVisibility(View.GONE);
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            }else{
+                playStopButton.setText("▶");
+                timer.cancel();
+                timer = null;
+                prevButton.setVisibility(View.VISIBLE);
+                nextButton.setVisibility(View.VISIBLE);
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            }
         }
-        //imageView.setImageURI(uris.get(nowIndex));
-        imageSwitcher.setImageURI(uris.get(nowIndex));
     }
 
+    //画像の切り替え
     private void movePosition(int move){
         nowIndex = nowIndex + move;
 
@@ -160,9 +183,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }else if(nowIndex >= uris.size()){
             nowIndex = 0;
         }
-
+        //imageView.setImageURI(uris.get(nowIndex));
+        imageSwitcher.setImageURI(uris.get(nowIndex));
     }
 
+    //パーミッションの判定
     @Override
     public void onRequestPermissionsResult(int resultCode, String permission[], int[] grantResult){
         switch (resultCode){
@@ -180,6 +205,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    //画像の取得
     private void getContentInfo(){
         //画像の情報を取得する
         ContentResolver resolver = getContentResolver();
@@ -211,6 +237,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         cursor.close();
     }
 
+    //画面タッチイベント
     @Override
     public boolean onTouchEvent(MotionEvent event){
 
@@ -218,11 +245,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case MotionEvent.ACTION_DOWN:
                 touchX = event.getX();
                 //touchY = event.getY();
-                if (containerView.getVisibility() == View.GONE){
-                    containerView.startAnimation(inAnimation);
-                    containerView.setVisibility(View.VISIBLE);
-                    timerCounter = 0;
-                }
+
                 break;
             case MotionEvent.ACTION_UP:
                 if(!slideshow) {
@@ -234,12 +257,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         movePosition(-1);
                     }
                 }
+                if (containerView.getVisibility() == View.GONE){
+                    containerView.startAnimation(inAnimation);
+                    containerView.setVisibility(View.VISIBLE);
+                    timerCounter = 0;
+                }else{
+                    if(touchX - event.getX() < 100 && event.getX() - touchX < 100) {
+                        hideButton();
+                    }
+                }
                 break;
         }
 
         return true;
     }
 
+    //ボタンの非表示
     public void hideButton(){
         if(containerView.getVisibility() != View.GONE) {
             containerView.startAnimation(outAnimation);
@@ -247,6 +280,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    //エラーダイアログの表示
     private void showAlertDialog(int error){
 
         //エラーコード1:パーミッションが許可されませんでした。
