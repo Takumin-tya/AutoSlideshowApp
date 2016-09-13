@@ -1,6 +1,7 @@
 package jp.techacademy.takumi.fukushima.autoslideshowapp;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.DialogInterface;
@@ -31,7 +32,7 @@ import java.util.TimerTask;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends Activity implements View.OnClickListener{
 
     private static final int PERMISSION_REQUEST_CODE = 100;
     ImageView imageView;
@@ -68,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
             }
-            if(1 < timerCounter){
+            if(0 < timerCounter){
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -76,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
             }
-            if(timerCounter <= 2) {
+            if(timerCounter <= 1) {
                 timerCounter++;
             }
         }
